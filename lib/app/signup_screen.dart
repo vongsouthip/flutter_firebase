@@ -45,7 +45,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
         await FirebaseFirestore.instance.collection("users").doc(uid).set({
           "name": _nameController.text.trim(),
-          "dob": dobController.text.trim(),
+          "dob": dobController.text.trim() ,
           "email": emailController.text.trim(),
           "created_at": FieldValue.serverTimestamp(),
         });

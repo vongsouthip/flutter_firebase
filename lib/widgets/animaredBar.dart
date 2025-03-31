@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase/app/cat_list.dart';
 import 'package:flutter_firebase/app/home.dart';
+import 'package:flutter_firebase/app/profile_screen.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,11 +18,11 @@ class _ExampleState extends State<Example> {
     fontSize: 30,
     fontWeight: FontWeight.w600,
   );
-  static const List<Widget> _widgetOptions = <Widget>[
-    Text('Home', style: optionStyle),
+  static List<Widget> _widgetOptions = <Widget>[
+    const Text('Home', style: optionStyle),
     CatListScreen(),
-    Text('Search', style: optionStyle),
-    Home(),
+    const Text('Search', style: optionStyle),
+    EditProfilePage(),
   ];
 
   Future<void> logout() async {

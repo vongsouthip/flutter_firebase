@@ -1,48 +1,94 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
-import 'package:flutter_firebase/model/cat_model.dart';
-import 'package:http/http.dart' as http;
+class CatListScreen extends StatefulWidget {
+  @override
+  _CatListScreenState createState() => _CatListScreenState();
+}
 
-class CatListScreen extends StatelessWidget {
-  const CatListScreen({super.key});
+class _CatListScreenState extends State<CatListScreen> {
+  List<String> images = [];
+  int page = 10;
+  bool isLoading = false;
+  ScrollController _scrollController = ScrollController();
 
-  Future<List<Cat>> fetchCats() async {
+  @override
+  void initState() {
+    super.initState();
+    fetchImages();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels ==
+              _scrollController.position.maxScrollExtent &&
+          !isLoading) {
+        fetchImages();
+      }
+    });
+  }
+
+  Future<void> fetchImages() async {
+    setState(() {
+      isLoading = true;
+    });
+
     final response = await http.get(
-      Uri.parse('https://api.thecatapi.com/v1/images/search?limit=10'),
+      Uri.parse(
+        'https://api.thecatapi.com/v1/images/search?limit=10&page=$page',
+      ),
     );
 
     if (response.statusCode == 200) {
-      List jsonResponse = json.decode(response.body);
-      return jsonResponse.map((data) => Cat.fromJson(data)).toList();
-    } else {
-      throw Exception('Failed to load cats');
+      List data = json.decode(response.body);
+      setState(() {
+        images.addAll(data.map((item) => item['url'] as String).toList());
+        page++;
+      });
     }
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder<List<Cat>>(
-        future: fetchCats(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return ListView.separated(
-              separatorBuilder: (context, index) => SizedBox(height: 20.0),
-              itemCount: snapshot.data!.length,
+      body: Column(
+        children: [
+          Expanded(
+            child: GridView.builder(
+              controller: _scrollController,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 1,
+              ),
+              itemCount: images.length + (isLoading ? 1 : 0),
               itemBuilder: (context, index) {
-                return ListTile(
-                  leading: Image.network(snapshot.data![index].url),
-                  title: Text('Cat ${index + 1}'),
-                );
+                if (index < images.length) {
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: CachedNetworkImage(imageUrl: images[index], 
+                      placeholder: (context, url) => Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      errorWidget: (context, url, error) => Icon(Icons.error),
+                    ),
+                  );
+                } else {
+                  return const Center(child: CircularProgressIndicator());
+                }
               },
-            );
-          } else if (snapshot.hasError) {
-            return Text(snapshot.error.toString());
-          }
-          return CircularProgressIndicator();
-        },
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 }
